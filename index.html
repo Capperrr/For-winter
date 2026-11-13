@@ -51,6 +51,7 @@ body{
   z-index:20;
   text-shadow: 0 0 20px #ffb8d888;
   animation: fadePop 1.5s ease forwards;
+  pointer-events: none; /* 关键：点击可以穿透 */
 }
 .particle{
   position:fixed;
@@ -93,7 +94,7 @@ body{
   <div class="title">FOR my bae WINTER</div>
 
 <audio id="bgMusic" loop preload="auto">
-  <source src="./bgm.wav" type="audio/wav">
+  <source src="./bgm.wav">
 
 <script>
 const texts = [
@@ -125,7 +126,7 @@ const usedZones = [];
 const zoneW = 28;
 const zoneH = 12;
 
-// 大小速度随机的飘雪
+// 随机大小飘雪
 function spawnBgSnow(){
   const p = document.createElement("div");
   p.className = "particle snow-bg";
@@ -141,7 +142,7 @@ function spawnBgSnow(){
 }
 setInterval(spawnBgSnow,600);
 
-// 鼠标移动飘爱心
+// 鼠标飘爱心
 document.addEventListener("mousemove", (e)=>{
   if(Math.random()>0.82){
     const h = document.createElement("div");
@@ -154,7 +155,7 @@ document.addEventListener("mousemove", (e)=>{
   }
 })
 
-// 找空位
+// 找空位防重叠
 function getSafePosition(){
   let attempts = 0;
   while(attempts < 50){
@@ -176,7 +177,8 @@ function getSafePosition(){
   return null;
 }
 
-document.addEventListener("click", (e)=>{
+// 同时支持 click + touchstart（手机）
+function handleTap(e){
   if(!musicStarted){
     bgMusic.play().catch(err=>console.log("audio err",err));
     musicStarted = true;
@@ -184,21 +186,22 @@ document.addEventListener("click", (e)=>{
 
   if(currentIndex < texts.length){
     const pos = getSafePosition();
-    if(!pos) return;
-    const newText = document.createElement("div");
-    newText.className = "msg-item";
-    newText.innerText = texts[currentIndex];
-    newText.style.left = pos.x + "%";
-    newText.style.top = pos.y + "%";
-    document.body.appendChild(newText);
-    currentIndex++;
+    if(pos){
+      const newText = document.createElement("div");
+      newText.className = "msg-item";
+      newText.innerText = texts[currentIndex];
+      newText.style.left = pos.x + "%";
+      newText.style.top = pos.y + "%";
+      document.body.appendChild(newText);
+      currentIndex++;
 
-    setTimeout(()=>{
-      newText.style.animation = "fadeOut 1.5s ease forwards";
-      setTimeout(()=>newText.remove(),1500);
-    },5500);
+      setTimeout(()=>{
+        newText.style.animation = "fadeOut 1.5s ease forwards";
+        setTimeout(()=>newText.remove(),1500);
+      },5500);
+    }
   } else {
-    // 全部读完，弹出带戒指彩蛋
+    // 全部读完弹出戒指彩蛋，不阻挡点击
     const egg = document.createElement("div");
     egg.className = "end-egg";
     egg.innerText = "I will always be with you\n💍";
@@ -207,9 +210,11 @@ document.addEventListener("click", (e)=>{
 
   for(let i=0;i<12;i++){
     const emoji = i%2 ===0 ? "❤" : "❄";
-    createClickParticle(e.clientX, e.clientY, emoji);
+    createClickParticle(e.clientX||e.touches?.[0]?.clientX, e.clientY||e.touches?.[0]?.clientY, emoji);
   }
-})
+}
+document.addEventListener("click", handleTap);
+document.addEventListener("touchstart", handleTap);
 
 function createClickParticle(x,y,emoji){
   const p = document.createElement("div");
