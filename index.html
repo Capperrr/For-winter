@@ -104,7 +104,6 @@ const texts = [
   "I wish you fewer worries."
 ];
 
-// 随机横向位置，纵向慢慢往下排
 function getPos(index){
   return {
     x: 8 + Math.random() * 84,
@@ -114,8 +113,8 @@ function getPos(index){
 
 async function typeWord(el, text, speed = 45){
   el.textContent = "";
-  for(let i=0;i<text.length;i++){
-    el.textContent += text[i];
+  for(const ch of text){
+    el.textContent += ch;
     await sleep(speed);
   }
 }
@@ -124,22 +123,25 @@ function sleep(ms){
 }
 
 async function runTyping(){
-  for(let i=0;i<texts.length;i++){
-    const div = document.createElement("div");
-    div.className = "line";
-    const p = getPos(i);
-    div.style.left = p.x + "%";
-    div.style.top = p.y + "%";
-    document.body.appendChild(div);
+  try{
+    for(let i=0;i<texts.length;i++){
+      const div = document.createElement("div");
+      div.className = "line";
+      const p = getPos(i);
+      div.style.left = p.x + "%";
+      div.style.top = p.y + "%";
+      document.body.appendChild(div);
 
-    await typeWord(div, texts[i], 45);
-    div.classList.add("show");
+      await typeWord(div, texts[i], 45);
+      div.classList.add("show");
 
-    // 打完停留 5 秒，然后淡出
-    await sleep(5000);
-    div.classList.add("hide");
-    await sleep(1500);
-    div.remove();
+      await sleep(5000);
+      div.classList.add("hide");
+      await sleep(1500);
+      div.remove();
+    }
+  }catch(err){
+    console.error("typing error:", err);
   }
 }
 
@@ -153,7 +155,7 @@ document.addEventListener("pointerdown", async ()=>{
   try{
     await audio.play();
   }catch(e){
-    console.log("audio error",e);
+    console.log("audio play failed:", e);
   }
   runTyping();
 })
