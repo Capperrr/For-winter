@@ -2,63 +2,145 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FOR my bae WINTER</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>❄️</text></svg>">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; overflow: hidden; }
-  body {
-    background: radial-gradient(ellipse at bottom, #1a2a4a 0%, #0a0f24 100%);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    position: relative;
-    cursor: pointer;
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  height:100vh;
+  background:#0b1020;
+  overflow:hidden;
+  font-family:system-ui, sans-serif;
+  color:white;
+}
+.title{
+  font-size:clamp(2rem,8vw,4rem);
+  font-weight:bold;
+  text-align:center;
+  position:fixed;
+  top:12%;
+  left:50%;
+  transform:translateX(-50%);
+  background: linear-gradient(90deg,#b8d8ff,#ffc8dd,#c3b1ff);
+  -webkit-background-clip:text;
+  color:transparent;
+  z-index:5;
+}
+.msg-item{
+  position:absolute;
+  font-size:clamp(1.1rem,3vw,1.8rem);
+  color:#e8efff;
+  text-align:center;
+  pointer-events:none;
+  animation:fadePop 1.2s ease forwards;
+}
+.particle{
+  position:fixed;
+  pointer-events:none;
+  font-size:24px;
+}
+.click-particle{
+  animation:fallBurst 3s linear forwards;
+}
+.snow-bg{
+  animation:fallSlow 8s linear forwards;
+}
+@keyframes fadePop{
+  0% {opacity:0; transform:scale(0.6)}
+  100% {opacity:1; transform:scale(1)}
+}
+@keyframes fallBurst{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  to{opacity:0;transform:translateY(100vh) scale(0.3)}
+}
+@keyframes fallSlow{
+  from{opacity:0.6;transform:translateY(-30px)}
+  to{opacity:0;transform:translateY(100vh)}
+}
+</style>
+</head>
+<body>
+  <div class="title">FOR my bae WINTER</div>
+
+<audio id="bgMusic" loop>
+  <source src="./bgm.wav" type="audio/wav">
+
+
+<script>
+const texts = [
+  "In 2026, I met you when you were 24.",
+  "That year, I was 21.",
+  "Three numbers that seemed unrelated",
+  "turned into our most special memories.",
+  "I never thought I would love you this much.",
+  "Back then, I could never imagine",
+  "I would call you my wife, instead of teacher.",
+  "I am quiet, and I do not like parties.",
+  "You love life, quick and bright in your mind.",
+  "We are two such different people.",
+  "It is from you that I understand what “lovely” means.",
+  "It is November, 2026.",
+  "Right now I am in the UK.",
+  "Clumsy as I am, this is how I show my love.",
+  "If you read this, please remember:",
+  "I love you. I miss you.",
+  "I want to hold you tight in my arms.",
+  "I wish you good health.",
+  "I wish you sleep well every night.",
+  "I wish you fewer worries."
+];
+let currentIndex = 0;
+const bgMusic = document.getElementById("bgMusic");
+let musicStarted = false;
+
+// 背景持续飘雪
+function spawnBgSnow(){
+  const p = document.createElement("div");
+  p.className = "particle snow-bg";
+  p.innerText = "❄";
+  p.style.left = Math.random()*100 + "%";
+  p.style.top = "-30px";
+  document.body.appendChild(p);
+  setTimeout(()=>p.remove(),8000);
+}
+setInterval(spawnBgSnow,600);
+
+document.addEventListener("click", (e)=>{
+  if(!musicStarted){
+    bgMusic.play();
+    musicStarted = true;
+  }
+  // 还有句子才继续弹出
+  if(currentIndex < texts.length){
+    const newText = document.createElement("div");
+    newText.className = "msg-item";
+    newText.innerText = texts[currentIndex];
+    // 随机横向位置，纵向控制在中间区域，不会太靠边
+    newText.style.left = 10 + Math.random()*80 + "%";
+    newText.style.top = 25 + Math.random()*50 + "%";
+    document.body.appendChild(newText);
+    currentIndex++;
   }
 
-  .title {
-    font-size: clamp(2.2rem, 9vw, 4.5rem);
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-align: center;
-    margin-bottom: 2rem;
-    background: linear-gradient(135deg, #ffd6e8 0%, #a8d8ff 50%, #e0c3fc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1.2;
+  // 点击放出雪花爱心
+  for(let i=0;i<12;i++){
+    const emoji = i%2 ===0 ? "❤" : "❄";
+    createClickParticle(e.clientX, e.clientY, emoji);
   }
+})
 
-  .title .small {
-    display: block;
-    font-size: 0.45em;
-    font-weight: 400;
-    letter-spacing: 0.3em;
-    margin-top: 0.5rem;
-    opacity: 0.8;
-  }
-
-  #quote {
-    font-size: clamp(1.1rem, 4vw, 1.6rem);
-    font-weight: 500;
-    text-align: center;
-    max-width: 85%;
-    min-height: 4rem;
-    line-height: 1.6;
-    margin-bottom: 2.5rem;
-    opacity: 0;
-    transition: opacity 0.6s ease, transform 0.6s ease;
-    color: #e0f0ff;
-    transform: translateY(10px);
-  }
-  #quote.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
+function createClickParticle(x,y,emoji){
+  const p = document.createElement("div");
+  p.className = "particle click-particle";
+  p.innerText = emoji;
+  p.style.left = x + "px";
+  p.style.top = y + "px";
+  document.body.appendChild(p);
+  setTimeout(()=>p.remove(),3000);
+}
+</script>
+</body>
+</html>
 
   #hint {
     position: absolute;
