@@ -51,7 +51,7 @@ body{
   z-index:20;
   text-shadow: 0 0 20px #ffb8d888;
   animation: fadePop 1.5s ease forwards;
-  pointer-events: none; /* 关键：点击可以穿透 */
+  pointer-events: none;
 }
 .particle{
   position:fixed;
@@ -94,7 +94,9 @@ body{
   <div class="title">FOR my bae WINTER</div>
 
 <audio id="bgMusic" loop preload="auto">
-  <source src="./bgm.wav">
+  <source src="./bgm.mp3" type="audio/mpeg">
+  <source src="./bgm.wav" type="audio/wav">
+
 
 <script>
 const texts = [
@@ -155,12 +157,13 @@ document.addEventListener("mousemove", (e)=>{
   }
 })
 
-// 找空位防重叠
+// 找空位，兜底直接随机位置，防止卡住
 function getSafePosition(){
   let attempts = 0;
+  let x,y;
   while(attempts < 50){
-    const x = 10 + Math.random()*(80 - zoneW);
-    const y = 22 + Math.random()*(55 - zoneH);
+    x = 10 + Math.random()*(80 - zoneW);
+    y = 22 + Math.random()*(55 - zoneH);
     let overlap = false;
     for(const z of usedZones){
       if(!(x + zoneW < z.x || z.x + zoneW < x || y + zoneH < z.y || z.y + zoneH < y)){
@@ -174,34 +177,36 @@ function getSafePosition(){
     }
     attempts++;
   }
-  return null;
+  // 兜底：就算重叠也返回，不会卡住
+  return {x,y};
 }
 
-// 同时支持 click + touchstart（手机）
+// pointerdown 统一触摸+鼠标
 function handleTap(e){
+  const x = e.clientX;
+  const y = e.clientY;
+
   if(!musicStarted){
-    bgMusic.play().catch(err=>console.log("audio err",err));
-    musicStarted = true;
+    bgMusic.play()
+    .then(()=>{musicStarted = true;})
+    .catch(err=>console.log("audio err",err));
   }
 
   if(currentIndex < texts.length){
     const pos = getSafePosition();
-    if(pos){
-      const newText = document.createElement("div");
-      newText.className = "msg-item";
-      newText.innerText = texts[currentIndex];
-      newText.style.left = pos.x + "%";
-      newText.style.top = pos.y + "%";
-      document.body.appendChild(newText);
-      currentIndex++;
+    const newText = document.createElement("div");
+    newText.className = "msg-item";
+    newText.innerText = texts[currentIndex];
+    newText.style.left = pos.x + "%";
+    newText.style.top = pos.y + "%";
+    document.body.appendChild(newText);
+    currentIndex++;
 
-      setTimeout(()=>{
-        newText.style.animation = "fadeOut 1.5s ease forwards";
-        setTimeout(()=>newText.remove(),1500);
-      },5500);
-    }
+    setTimeout(()=>{
+      newText.style.animation = "fadeOut 1.5s ease forwards";
+      setTimeout(()=>newText.remove(),1500);
+    },5500);
   } else {
-    // 全部读完弹出戒指彩蛋，不阻挡点击
     const egg = document.createElement("div");
     egg.className = "end-egg";
     egg.innerText = "I will always be with you\n💍";
@@ -210,11 +215,10 @@ function handleTap(e){
 
   for(let i=0;i<12;i++){
     const emoji = i%2 ===0 ? "❤" : "❄";
-    createClickParticle(e.clientX||e.touches?.[0]?.clientX, e.clientY||e.touches?.[0]?.clientY, emoji);
+    createClickParticle(x,y,emoji);
   }
 }
-document.addEventListener("click", handleTap);
-document.addEventListener("touchstart", handleTap);
+document.addEventListener("pointerdown", handleTap);
 
 function createClickParticle(x,y,emoji){
   const p = document.createElement("div");
