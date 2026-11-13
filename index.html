@@ -37,8 +37,7 @@ body{
   color:#e8efff;
   text-align:center;
   pointer-events:none;
-  animation:fadePop 1.2s ease forwards;
-  text-shadow: 0 0 12px #b8d8ff77;
+  white-space: pre-line;
 }
 .end-egg{
   position:fixed;
@@ -58,9 +57,6 @@ body{
   pointer-events:none;
   font-size:24px;
 }
-.click-particle{
-  animation:fallBurst 3s linear forwards;
-}
 .snow-bg{
   animation:fallSlow 8s linear forwards;
 }
@@ -71,14 +67,6 @@ body{
 @keyframes fadePop{
   0% {opacity:0; transform:scale(0.6)}
   100% {opacity:1; transform:scale(1)}
-}
-@keyframes fadeOut{
-  from {opacity:1}
-  to {opacity:0}
-}
-@keyframes fallBurst{
-  from{opacity:1;transform:translateY(0) scale(1)}
-  to{opacity:0;transform:translateY(100vh) scale(0.3)}
 }
 @keyframes fallSlow{
   from{opacity:0.6;transform:translateY(-30px)}
@@ -92,11 +80,6 @@ body{
 </head>
 <body>
   <div class="title">FOR my bae WINTER</div>
-
-<audio id="bgMusic" loop preload="auto">
-  <source src="./bgm.mp3" type="audio/mpeg">
-  <source src="./bgm.wav" type="audio/wav">
-
 
 <script>
 const texts = [
@@ -121,14 +104,48 @@ const texts = [
   "I wish you sleep well every night.",
   "I wish you fewer worries."
 ];
-let currentIndex = 0;
-const bgMusic = document.getElementById("bgMusic");
-let musicStarted = false;
-const usedZones = [];
-const zoneW = 28;
-const zoneH = 12;
 
-// 随机大小飘雪
+// 随机位置
+function randomPos(){
+  return {
+    x: 10 + Math.random() * 80,
+    y: 22 + Math.random() * 55
+  }
+}
+
+// 打字机函数
+async function typeWriter(el, text, speed = 45) {
+  el.textContent = "";
+  for(let i = 0; i < text.length; i++){
+    el.textContent += text[i];
+    await sleep(speed);
+  }
+}
+function sleep(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+// 主流程：逐个句子打字，打完停留6秒
+(async function run(){
+  for(const sentence of texts){
+    const pos = randomPos();
+    const div = document.createElement("div");
+    div.className = "msg-item";
+    div.style.left = pos.x + "%";
+    div.style.top = pos.y + "%";
+    document.body.appendChild(div);
+
+    await typeWriter(div, sentence);
+    await sleep(6000);
+  }
+  // 全部结束，弹出结尾
+  const endDiv = document.createElement("div");
+  endDiv.className = "end-egg";
+  endDiv.innerText = "I will always be with you\n💍";
+  document.body.appendChild(endDiv);
+})();
+
+// 雪花
 function spawnBgSnow(){
   const p = document.createElement("div");
   p.className = "particle snow-bg";
@@ -156,79 +173,6 @@ document.addEventListener("mousemove", (e)=>{
     setTimeout(()=>h.remove(),2200);
   }
 })
-
-// 找空位，兜底直接随机位置，防止卡住
-function getSafePosition(){
-  let attempts = 0;
-  let x,y;
-  while(attempts < 50){
-    x = 10 + Math.random()*(80 - zoneW);
-    y = 22 + Math.random()*(55 - zoneH);
-    let overlap = false;
-    for(const z of usedZones){
-      if(!(x + zoneW < z.x || z.x + zoneW < x || y + zoneH < z.y || z.y + zoneH < y)){
-        overlap = true;
-        break;
-      }
-    }
-    if(!overlap){
-      usedZones.push({x,y,w:zoneW,h:zoneH});
-      return {x,y};
-    }
-    attempts++;
-  }
-  // 兜底：就算重叠也返回，不会卡住
-  return {x,y};
-}
-
-// pointerdown 统一触摸+鼠标
-function handleTap(e){
-  const x = e.clientX;
-  const y = e.clientY;
-
-  if(!musicStarted){
-    bgMusic.play()
-    .then(()=>{musicStarted = true;})
-    .catch(err=>console.log("audio err",err));
-  }
-
-  if(currentIndex < texts.length){
-    const pos = getSafePosition();
-    const newText = document.createElement("div");
-    newText.className = "msg-item";
-    newText.innerText = texts[currentIndex];
-    newText.style.left = pos.x + "%";
-    newText.style.top = pos.y + "%";
-    document.body.appendChild(newText);
-    currentIndex++;
-
-    setTimeout(()=>{
-      newText.style.animation = "fadeOut 1.5s ease forwards";
-      setTimeout(()=>newText.remove(),1500);
-    },5500);
-  } else {
-    const egg = document.createElement("div");
-    egg.className = "end-egg";
-    egg.innerText = "I will always be with you\n💍";
-    document.body.appendChild(egg);
-  }
-
-  for(let i=0;i<12;i++){
-    const emoji = i%2 ===0 ? "❤" : "❄";
-    createClickParticle(x,y,emoji);
-  }
-}
-document.addEventListener("pointerdown", handleTap);
-
-function createClickParticle(x,y,emoji){
-  const p = document.createElement("div");
-  p.className = "particle click-particle";
-  p.innerText = emoji;
-  p.style.left = x + "px";
-  p.style.top = y + "px";
-  document.body.appendChild(p);
-  setTimeout(()=>p.remove(),3000);
-}
 </script>
 </body>
 </html>
